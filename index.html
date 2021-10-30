@@ -1,122 +1,66 @@
  <html>
     <script type="text/javascript">
-    var canvas, ctx, flag = false,
-        prevX = 0,
-        currX = 0,
-        prevY = 0,
-        currY = 0,
-        dot_flag = false;
+    var clearButton = document.getElementById('clr');
+var canvas = document.getElementById('canvas');
+var context = canvas.getContext('2d');
+var dragging = false;
 
-    var x = "black",
-        y = 2;
-    
-    function init() {
-        canvas = document.getElementById('can');
-        ctx = canvas.getContext("2d");
-        w = canvas.width;
-        h = canvas.height;
-     
-        canvas.addEventListener("touchmove", function (e) {
-            findxy('move', e)
-        }, false);
-        canvas.addEventListener("mousedown", function (e) {
-            findxy('down', e)
-        }, false);
-        canvas.addEventListener("mouseup", function (e) {
-            findxy('up', e)
-        }, false);
-        canvas.addEventListener("mouseout", function (e) {
-            findxy('out', e)
-        }, false);
+function getMousePosition(e) {
+    var mouseX = e.offsetX * canvas.width / canvas.clientWidth | 0;
+    var mouseY = e.offsetY * canvas.height / canvas.clientHeight | 0;
+    return {x: mouseX, y: mouseY};
+}
+
+context.mozImageSmoothingEnabled = false;
+context.imageSmoothingEnabled = false;
+
+canvas.width = 1280;
+canvas.height = 720;
+canvas.style.width = '100%';
+canvas.style.height = '100%';
+
+/* CLEAR CANVAS */
+function clearCanvas() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+clearButton.addEventListener('click', clearCanvas);
+
+
+var putPoint = function (e) {
+    if (dragging) {
+        context.lineTo(getMousePosition(e).x, getMousePosition(e).y);
+        context.lineWidth = 10;
+        context.stroke();
+        context.beginPath();
+        context.arc(getMousePosition(e).x, getMousePosition(e).y,10, 0, Math.PI * 2);
+        context.fill();
+        context.beginPath();
+        context.moveTo(getMousePosition(e).x, getMousePosition(e).y);
     }
-    
-    function color(obj) {
-        switch (obj.id) {
-            case "green":
-                x = "green";
-                break;
-            case "blue":
-                x = "blue";
-                break;
-            case "red":
-                x = "red";
-                break;
-            case "yellow":
-                x = "yellow";
-                break;
-            case "orange":
-                x = "orange";
-                break;
-            case "black":
-                x = "black";
-                break;
-            case "white":
-                x = "white";
-                break;
-        }
-        if (x == "white") y = 14;
-        else y = 2;
-    
-    }
-    
-    function draw() {
-        ctx.beginPath();
-        ctx.moveTo(prevX, prevY);
-        ctx.lineTo(currX, currY);
-        ctx.strokeStyle = x;
-        ctx.lineWidth = y;
-        ctx.stroke();
-        ctx.closePath();
-    }
-    
-    function erase() {
-        var m = confirm("Want to clear?");
-        if (m) {
-            ctx.clearRect(0, 0, w, h);
-            document.getElementById("canvasimg").style.display = "none";
-        }
-    }
-    
-    function save() {
-        document.getElementById("canvasimg").style.border = "2px solid";
-        var dataURL = canvas.toDataURL();
-        document.getElementById("canvasimg").src = dataURL;
-        document.getElementById("canvasimg").style.display = "inline";
-    }
-    
-    function findxy(res, e) {
-        if (res == 'down') {
-            prevX = currX;
-            prevY = currY;
-            currX = e.clientX - canvas.offsetLeft;
-            currY = e.clientY - canvas.offsetTop;
-    
-            flag = true;
-            dot_flag = true;
-            if (dot_flag) {
-                ctx.beginPath();
-                ctx.fillStyle = x;
-                ctx.fillRect(currX, currY, 2, 2);
-                ctx.closePath();
-                dot_flag = false;
-            }
-        }
-        if (res == 'up' || res == "out") {
-            flag = false;
-        }
-        if (res == 'move') {
-            if (flag) {
-                prevX = currX;
-                prevY = currY;
-                currX = e.clientX - canvas.offsetLeft;
-                currY = e.clientY - canvas.offsetTop;
-                draw();
-            }
-        }
-    }
+};
+
+var engage = function (e) {
+    dragging = true;
+    putPoint(e);
+};
+var disengage = function () {
+    dragging = false;
+    context.beginPath();
+};
+
+canvas.addEventListener('mousedown', engage);
+canvas.addEventListener('mousemove', putPoint);
+canvas.addEventListener('mouseup', disengage);
+document.addEventListener('mouseup', disengage);
+canvas.addEventListener('contextmenu', disengage);
+
+canvas.addEventListener('touchstart', engage, false);
+canvas.addEventListener('touchmove', putPoint, false);
+canvas.addEventListener('touchend', disengage, false);
     </script>
     <body onload="init()">
-        <canvas id="can" width="400" height="400" style="position:absolute;top:10%;left:10%;border:2px solid;"></canvas>
+        <canvas id="canvas" width="400" height="400" style="position:absolute;top:10%;left:10%;border:2px solid;"></canvas>
         <div style="position:absolute;top:12%;left:43%;">Choose Color</div>
         <div style="position:absolute;top:15%;left:45%;width:10px;height:10px;background:green;" id="green" onclick="color(this)"></div>
         <div style="position:absolute;top:15%;left:46%;width:10px;height:10px;background:blue;" id="blue" onclick="color(this)"></div>
